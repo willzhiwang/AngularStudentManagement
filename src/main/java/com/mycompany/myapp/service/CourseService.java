@@ -56,6 +56,12 @@ public class CourseService {
         return courseRepository.findAllCoursesDtoWithTeacherName();
     }
 
+    public List<CourseWithTNDto> findRegisteredCoursesFromDB() {
+        User u= userService.getUserWithAuthorities().get();
+        //System.out.println("*******Current USER ID: "+curUser.get().getId());
+        //return courseRepository.findRegisteredCoursesFrom();
+        return userCourseRepository.findRegisteredCoursesFrom(u);
+    }
 
     public void registerCourse(String courseName) throws Exception{
         Optional<User> curUser = userService.getUserWithAuthorities();
@@ -80,7 +86,7 @@ public class CourseService {
 
         Course courseBeingSaved = Course.builder()
             .courseName(course.getCourseName())
-            .courseContent(course.getCourseContent())
+            .courseContent(course.getCourseLocation())
             .courseLocation(course.getCourseContent())
             .teacherId(course.getTeacherId())
             .build();
@@ -95,13 +101,30 @@ public class CourseService {
 
     public void deleteCourse(String courseName) throws Exception{
         Optional<Course> OptionalExistingCourse = courseRepository.findCourseByCourseName(courseName);
-
         if(!OptionalExistingCourse.isPresent()){
             throw new Exception("Course is not exist.");
         }
 
         try {
             courseRepository.delete(OptionalExistingCourse.get());
+        } catch (Exception e){
+            throw new Exception(e.getMessage());
+        }
+    }
+
+    public void dropCourse(String courseName) throws Exception{
+        Optional<Course> OptionalExistingCourse = courseRepository.findCourseByCourseName(courseName);
+        Course c = OptionalExistingCourse.get();
+        User u = userService.getUserWithAuthorities().get();
+        Optional<UserCourse> OptionalExistingUserCourse = userCourseRepository.findUserCourseByCourseAndUser(c, u);
+        UserCourse uc = OptionalExistingUserCourse.get();
+
+        if(!OptionalExistingCourse.isPresent()){
+            throw new Exception("Course is not exist.");
+        }
+        try {
+            userCourseRepository.delete(uc);
+            //userCourseRepository.deleteByCourseAndUser(c, u);
         } catch (Exception e){
             throw new Exception(e.getMessage());
         }
@@ -123,19 +146,22 @@ public class CourseService {
 
     }
 
-    public void addCourseToStudent(UserCourse userCourse) throws Exception {
+    public void addCourseToStudent(String userCourse) throws Exception {
 
         Optional<User> curUser = userService.getUserWithAuthorities();
-        // 2 find course from course table
-
+        Optional<Course> curCourse = courseRepository.findCourseByCourseName(userCourse);
 
         UserCourse t1 =  UserCourse.builder()
-            .course(c1)
-            .user(curUser)
+            .course(curCourse.get())
+            .user(curUser.get())
             .build();
 
+//        if(curCourse.isPresent() && curUser.isPresent()){
+//            throw new Exception("Course is already registered.");
+//        }
+
         try {
-            UserCourseRepository.saveAndFlush(t1);
+            userCourseRepository.saveAndFlush(t1);
         } catch (Exception e){
             throw new Exception(e.getMessage());
         }

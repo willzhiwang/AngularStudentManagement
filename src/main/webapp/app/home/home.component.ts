@@ -16,18 +16,19 @@ export class HomeComponent implements OnInit {
     account: Account;
     modalRef: NgbModalRef;
     classeNameNeedToReg: string;
+    courses: CourseDto[] = [];
+    course: CourseDto;
+    coursesWithTN: CourseWithTNDto[] = [];
+    private currentUserCredential: String;
 
     constructor(
         private principal: Principal,
         private loginModalService: LoginModalService,
         private eventManager: JhiEventManager,
-        private courseService: CourseService
-    ) {}
+        private courseService: CourseService,
+        //private currentUserCredential: CurrentUserCredential
 
-    courses: CourseDto[] = [];
-
-    coursesWithTN: CourseWithTNDto[] = [];
-
+) {}
     ngOnInit() {
         this.principal.identity().then(account => {
             this.account = account;
@@ -52,12 +53,13 @@ export class HomeComponent implements OnInit {
     }
 
     getAllCourses() {
-        debugger;
+        //debugger;
         this.courseService.getCourseInfo().subscribe(curDto => {
             if (!curDto) {
                 this.courses = [];
             } else {
                 this.courses = curDto;
+                //console.log(this.courses);
             }
         });
     }
@@ -72,16 +74,51 @@ export class HomeComponent implements OnInit {
         });
     }
 
-    // registerCourse(courseName) {
-    //
-    // }
+    getRegisteredCourses() {
+        this.courseService.getRegisteredCourses().subscribe(curDto => {
+            if (!curDto) {
+                this.coursesWithTN = [];
+            } else {
+                this.coursesWithTN = curDto;
+            }
+        });
+    }
+
+    dropCourse(courseName){
+        this.courseService.drop(courseName).subscribe();
+    }
+    courseName: string;
+    courseLocation: string;
+    courseContent: string;
+    teacherId: number;
+    createCourse() {
+        this.course = {
+            courseName: this.courseName,
+            courseLocation: this.courseLocation,
+            courseContent: this.courseContent,
+            teacherId: this.teacherId
+        };
+        //console.log(this.course);
+        //debugger;
+        this.courseService.create(this.course).subscribe();
+    }
+
+    deleteCourse(courseName) {
+        //console.log(courseName);
+        //debugger;
+        this.courseService.delete(courseName).subscribe();
+    }
 
     clearAllCourses() {
         this.courses = [];
     }
 
-    addCourseToStudent() {
-        const courseName = 'temp';
-        this.courseService.addCourseToStudent(courseName, currentUserCredential);
+    clearRegisteredCourses() {
+        this.coursesWithTN = [];
+    }
+
+    addCourseToStudent(courseName) {
+        console.log(courseName);
+        this.courseService.addCourseToStudent(courseName/*, this.currentUserCredential*/).subscribe();
     }
 }
