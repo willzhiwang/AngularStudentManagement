@@ -3,7 +3,9 @@ import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { JhiEventManager } from 'ng-jhipster';
 
 import { LoginModalService, Principal, Account } from 'app/core';
-import { Course } from './course.model';
+import { CourseService } from 'app/shared/service/CourseService';
+import { CourseDto } from 'app/shared/model/course-dto.model';
+import { CourseWithTNDto } from 'app/shared/model/courseWithTN-dto.model';
 
 @Component({
     selector: 'jhi-home',
@@ -13,15 +15,20 @@ import { Course } from './course.model';
 export class HomeComponent implements OnInit {
     account: Account;
     modalRef: NgbModalRef;
+    classeNameNeedToReg: string;
+    courses: CourseDto[] = [];
+    course: CourseDto;
+    coursesWithTN: CourseWithTNDto[] = [];
+    private currentUserCredential: String;
 
-    constructor(private principal: Principal, private loginModalService: LoginModalService, private eventManager: JhiEventManager) {}
+    constructor(
+        private principal: Principal,
+        private loginModalService: LoginModalService,
+        private eventManager: JhiEventManager,
+        private courseService: CourseService,
+        //private currentUserCredential: CurrentUserCredential
 
-    courses: Course[] = [
-        new Course('testCourse1', 'USA', 'testContent1', '100'),
-        new Course('testCourse2', 'USA', 'testContent2', '200'),
-        new Course('testCourse3', 'CHN', 'testContent3', '300')
-    ];
-
+) {}
     ngOnInit() {
         this.principal.identity().then(account => {
             this.account = account;
@@ -41,7 +48,85 @@ export class HomeComponent implements OnInit {
         return this.principal.isAuthenticated();
     }
 
+    isStudent() {
+        return this.principal.isStduent();
+    }
+
+    isTeacher() {
+        return this.principal.isTeacher();
+    }
+
     login() {
         this.modalRef = this.loginModalService.open();
+    }
+
+    getAllCourses() {
+        //debugger;
+        this.courseService.getCourseInfo().subscribe(curDto => {
+            if (!curDto) {
+                this.courses = [];
+            } else {
+                this.courses = curDto;
+                //console.log(this.courses);
+            }
+        });
+    }
+
+    getAllCoursesWithTN() {
+        this.courseService.getCourseInfoWithTN().subscribe(curDto => {
+            if (!curDto) {
+                this.coursesWithTN = [];
+            } else {
+                this.coursesWithTN = curDto;
+            }
+        });
+    }
+
+    getRegisteredCourses() {
+        this.courseService.getRegisteredCourses().subscribe(curDto => {
+            if (!curDto) {
+                this.coursesWithTN = [];
+            } else {
+                this.coursesWithTN = curDto;
+            }
+        });
+    }
+
+    dropCourse(courseName){
+        this.courseService.drop(courseName).subscribe();
+    }
+    courseName: string;
+    courseLocation: string;
+    courseContent: string;
+    teacherId: number;
+    createCourse() {
+        this.course = {
+            courseName: this.courseName,
+            courseLocation: this.courseLocation,
+            courseContent: this.courseContent,
+            teacherId: this.teacherId
+        };
+        //console.log(this.course);
+        //debugger;
+        this.courseService.create(this.course).subscribe();
+    }
+
+    deleteCourse(courseName) {
+        //console.log(courseName);
+        //debugger;
+        this.courseService.delete(courseName).subscribe();
+    }
+
+    clearAllCourses() {
+        this.courses = [];
+    }
+
+    clearRegisteredCourses() {
+        this.coursesWithTN = [];
+    }
+
+    addCourseToStudent(courseName) {
+        console.log(courseName);
+        this.courseService.addCourseToStudent(courseName/*, this.currentUserCredential*/).subscribe();
     }
 }

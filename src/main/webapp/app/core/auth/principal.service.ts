@@ -6,6 +6,8 @@ import { AccountService } from './account.service';
 export class Principal {
     private userIdentity: any;
     private authenticated = false;
+    private teacherAuth = false;
+    private studentAuth = false;
     private authenticationState = new Subject<any>();
 
     constructor(private account: AccountService) {}
@@ -68,6 +70,15 @@ export class Principal {
                 const account = response.body;
                 if (account) {
                     this.userIdentity = account;
+                    //console.log("----------",this.userIdentity.authorities);
+                    if (this.userIdentity.authorities.includes('ROLE_TEACHER') ){
+                        console.log("*** ROLE_TEACHER");
+                        this.teacherAuth = true;
+                    }
+                    if (this.userIdentity.authorities.includes('ROLE_STUDENT') ){
+                        console.log("*** ROLE_STUDENT");
+                        this.studentAuth = true;
+                    }
                     this.authenticated = true;
                 } else {
                     this.userIdentity = null;
@@ -86,6 +97,16 @@ export class Principal {
 
     isAuthenticated(): boolean {
         return this.authenticated;
+    }
+
+    // Please realize this method
+    isTeacher(): boolean {
+        return this.teacherAuth;
+    }
+
+    // Please realize this method
+    isStduent(): boolean {
+        return this.studentAuth;
     }
 
     isIdentityResolved(): boolean {
